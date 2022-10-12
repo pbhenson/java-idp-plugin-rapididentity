@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>id.signet.idp.plugin.authn</groupId>
+        <artifactId>idp-plugin-rapididentity</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <name>Shibboleth IdP :: Plugins :: RapidIdentity MFA Flow</name>
+    <description>IdP RapidIdentity plugin packaging.</description>
+    <artifactId>idp-plugin-rapididentity-dist</artifactId>
+    <packaging>pom</packaging>
+
+    <properties>
+        <checkstyle.configLocation>${project.basedir}/../checkstyle.xml</checkstyle.configLocation>
+        <dist.finalName>shibboleth-idp-plugin-rapididentity-${project.version}</dist.finalName>
+        <dist.assemblyDirectory>${project.build.directory}/${dist.finalName}</dist.assemblyDirectory>
+    </properties>
+
+    <build>
+        <plugins>
+            <!-- Copy src/main/resources to assembly directory. -->
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <includeEmptyDirs>true</includeEmptyDirs>
+                            <outputDirectory>${dist.assemblyDirectory}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/src/main/resources</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Assemble -->
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <appendAssemblyId>false</appendAssemblyId>
+                    <descriptors>
+                        <descriptor>src/main/assembly/plugin-assembly-tgz.xml</descriptor>
+                        <descriptor>src/main/assembly/plugin-assembly-zip.xml</descriptor>
+                    </descriptors>
+                    <finalName>${dist.finalName}</finalName>
+                    <tarLongFileMode>gnu</tarLongFileMode>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <dependencies>
+                    <dependency>
+                        <groupId>net.shibboleth.maven.enforcer.rules</groupId>
+                        <artifactId>maven-dist-enforcer</artifactId>
+                        <version>${maven-dist-enforcer.version}</version>
+                    </dependency>
+                </dependencies>
+                <executions>
+                    <execution>
+                        <id>rapididentity-enforce</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <jarEnforcer implementation="net.shibboleth.mvn.enforcer.impl.JarEnforcer">
+                                    <dataGroupId>net.shibboleth.maven.enforcer.rules</dataGroupId>
+                                    <dataArtifactId>maven-dist-enforcer-data</dataArtifactId>
+                                    <dataVersion>${maven-dist-enforcer-data.version}</dataVersion>
+                                    <dataKeyRing>${basedir}/src/main/enforcer/shibbolethKeys.gpg</dataKeyRing>
+                                    <parentPomDir>${basedir}/..</parentPomDir>
+                                    <zipFiles>${project.build.directory}/${dist.finalName}.zip</zipFiles>
+                                    <tgzFiles>${project.build.directory}/${dist.finalName}.tar.gz</tgzFiles>
+                                    <checkSignatures>true</checkSignatures>
+                                    <checkDependencies>true</checkDependencies>
+                                    <listJarSources>false</listJarSources>
+                                    <checkM2>false</checkM2>
+                                </jarEnforcer>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+
+    </build>
+
+</project>

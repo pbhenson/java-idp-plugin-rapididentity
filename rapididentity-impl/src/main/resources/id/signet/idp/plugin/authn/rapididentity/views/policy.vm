@@ -1,0 +1,128 @@
+##
+## Velocity Template for Policy Choice view-state
+##
+## Velocity context will contain the following properties
+## flowExecutionUrl - the form action location
+## flowRequestContext - the Spring Web Flow RequestContext
+## flowExecutionKey - the SWF execution key (this is built into the flowExecutionUrl)
+## profileRequestContext - root of context tree
+## authenticationContext - context with authentication request information
+## rapidIdentityContext - context with RapidIdentity API authentication request information
+## authenticationErrorContext - context with login error state
+## authenticationWarningContext - context with login warning state
+## rpUIContext - the context with SP UI information from the metadata
+## encoder - HTMLEncoder class
+## request - HttpServletRequest
+## response - HttpServletResponse
+## environment - Spring Environment object for property resolution
+## custom - arbitrary object injected by deployer
+##
+#set ($rpContext = $profileRequestContext.getSubcontext('net.shibboleth.idp.profile.context.RelyingPartyContext'))
+##
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>#springMessageText("idp.title", "Web Login Service")</title>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+        <link rel="stylesheet" type="text/css" href="$request.getContextPath()#springMessageText("idp.css", "/css/placeholder.css")">
+    </head>
+    <body>
+        <main class="main">
+            <header>
+                <img class="main-logo" src="$request.getContextPath()#springMessageText("idp.logo", "/images/placeholder-logo.png")" alt="#springMessageText("idp.logo.alt-text", "logo")" />
+
+                #set ($serviceName = $rpUIContext.serviceName)
+                #if ($serviceName && !$rpContext.getRelyingPartyId().contains($serviceName))
+                    <h1>#springMessageText("idp.login.loginTo", "Login to") $encoder.encodeForHTML($serviceName)</h1>
+                #end
+            </header>
+
+            <section>
+                <form action="$flowExecutionUrl" method="post">
+                    #parse("csrf/csrf.vm")
+
+                    #*
+                    //
+                    //    SP Description & Logo (optional)
+                    //    These idpui lines will display added information (if available
+                    //    in the metadata) about the Service Provider (SP) that requested
+                    //    authentication. These idpui lines are "active" in this example
+                    //    (not commented out) - this extra SP info will be displayed.
+                    //    Remove or comment out these lines to stop the display of the
+                    //    added SP information.
+                    //
+                    *#
+                    #set ($logo = $rpUIContext.getLogo())
+                    #if ($logo)
+                        <img class="service-logo" src= "$encoder.encodeForHTMLAttribute($logo)" alt="$encoder.encodeForHTMLAttribute($serviceName)">
+                    #end
+                    #set ($desc = $rpUIContext.getServiceDescription())
+                    #if ($desc)
+                        <p>$encoder.encodeForHTML($desc)</p>
+                    #end
+
+                    ## $simpleForm is true if all policies have only one auth method
+                    #set ($simpleForm = $rapidIdentityContext.authPoliciesSimple())
+                    <table>
+                    #if ($simpleForm)
+                      <tr><th>Method</th></tr>
+                    #else
+                      <tr><th>Policy</th><th>Methods</th></tr>
+                    #end
+                    #foreach ($policy in $rapidIdentityContext.getAuthPolicies())
+                      <tr>
+                        <td>
+                          <input type="radio" checked id="$policy.getId()" name="policy"
+                           value="$policy.getId()">
+                          <label for="$policy.getId()">
+                          #if ($simpleForm)
+                            $policy.getMethods()[0]
+                          #else
+                            $policy.getName()
+                          #end
+                          </label>
+                       </td>
+                       #if (!$simpleForm)
+                         <td>
+                           #foreach ($method in $policy.getMethods())
+                             $method
+                           #end
+                         </td>
+                      #end
+                      </tr>
+                    #end
+                    </table>
+                    <div class="grid">
+                        <div class="grid-item">
+                          <input type="checkbox" id="remember" name="remember" value="true">
+                          <label for="remember">#springMessageText("idp.authn.rapididentity.rememberpolicy", "Remember choice")</label><br>
+                        </div>
+                    #if ($rapidIdentityContext.getStoredCookiePolicy())
+                        <div class="grid-item">
+                          <input type="checkbox" id="forget" name="forget" value="true">
+                          <label for="forget">#springMessageText("idp.authn.rapididentity.forgetpolicy", "Forget saved choice")</label><br>
+                        </div>
+                    #end
+                        <div class="grid-item">
+                            <button type="submit" name="_eventId_proceed"
+                                onClick="this.childNodes[0].nodeValue='#springMessageText("idp.authn.rapididentity.pleasewait", "Please wait...")'"
+                                >#springMessageText("idp.authn.rapididentity.choosepolicy", "Choose")</button>
+                        </div>
+                    </div>
+                </form>
+
+                <ul>
+                    <li><a href="#springMessageText("idp.url.password.reset", '#')">#springMessageText("idp.login.forgotPassword", "Forgot your password?")</a></li>
+                    <li><a href="#springMessageText("idp.url.helpdesk", '#')">#springMessageText("idp.login.needHelp", "Need Help?")</a></li>
+                </ul>
+            </section>
+        </main>
+        <footer class="footer">
+            <div class="cc">
+                <p>#springMessageText("idp.footer", "Insert your footer text here.")</p>
+            </div>
+        </footer>
+     </body>
+</html>

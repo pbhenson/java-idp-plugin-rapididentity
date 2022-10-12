@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:c="http://www.springframework.org/schema/c"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+                           http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd"
+
+       default-init-method="initialize"
+       default-destroy-method="destroy">
+
+    <bean class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer"
+        p:placeholderPrefix="%{" p:placeholderSuffix="}" />
+
+    <bean class="net.shibboleth.ext.spring.config.IdentifiableBeanPostProcessor" />
+    <bean class="net.shibboleth.idp.profile.impl.ProfileActionBeanPostProcessor" />
+
+    <bean id="messageSource" class="org.springframework.context.support.ReloadableResourceBundleMessageSource"
+        p:cacheSeconds="%{idp.message.cacheSeconds:300}"
+        p:basenames="classpath:/id/signet/idp/plugin/authn/rapididentity/messages"
+        p:defaultEncoding="UTF-8" />
+
+    <!-- Default username comes from previous c14n or session. -->
+    <bean id="DefaultUsernameLookupStrategy"
+        class="net.shibboleth.idp.session.context.navigate.CanonicalUsernameLookupStrategy" />
+
+    <bean id="rapidIdentityHttpClient" parent="shibboleth.HttpClientFactory"
+        p:tLSSocketFactory-ref="shibboleth.SecurityEnhancedTLSSocketFactory"
+        p:connectionDisregardTLSCertificate="%{idp.authn.rapididentity.httpclient.connectionDisregardTLSCertificate:false}"
+        p:connectionTimeout="%{idp.authn.rapididentity.httpclient.connectionTimeout:PT1M}"
+        p:connectionRequestTimeout="%{idp.authn.rapididentity.httpclient.connectionRequestTimeout:PT1M}"
+        p:socketTimeout="%{idp.authn.rapididentity.httpclient.socketTimeout:PT1M}"
+        p:maxConnectionsTotal="%{idp.authn.rapididentity.httpclient.maxConnectionsTotal:100}"
+        p:maxConnectionsPerRoute="%{idp.authn.rapididentity.httpclient.maxConnectionsPerRoute:100}" />
+
+    <bean id="rapidIdentityHttpSecurityParameters"
+        class="org.opensaml.security.httpclient.HttpClientSecurityParameters">
+            <property name="tLSTrustEngine">
+                <bean parent="shibboleth.StaticPKIXTrustEngine"
+                    p:certificates="%{idp.authn.rapididentity.certificate:%{idp.home}/credentials/rapididentity.pem}"
+                    p:checkNames="false" />
+            </property>
+    </bean>
+
+    <bean id="InitFlow"
+        class="id.signet.idp.plugin.authn.rapididentity.impl.InitFlow" scope="prototype"
+        p:server="%{idp.authn.rapididentity.server}"
+        p:includeProxyHeader="%{idp.authn.rapididentity.proxyheader:false}"
+        p:pingMeTimeout="%{idp.authn.rapididentity.pingMe.timeout:PT30S}"
+        p:pingMeRefresh="%{idp.authn.rapididentity.pingMe.refresh:PT5S}"
+        p:policyCookieName="%{idp.authn.rapididentity.policyCookieName:shib_idp_rapididentity_policy}"
+        p:cookieManager-ref="shibboleth.UserPrefsCookieManager"
+        p:usernameLookupStrategy="#{getObject('shibboleth.authn.rapididentity.UsernameLookupStrategy') ?: getObject('DefaultUsernameLookupStrategy')}"
+        p:httpClientSecurityParameters-ref="rapidIdentityHttpSecurityParameters"
+        />
+
+    <bean id="InitAPI"
+        class="id.signet.idp.plugin.authn.rapididentity.impl.InitAPI" scope="prototype"
+        p:httpClient-ref="rapidIdentityHttpClient"
+        p:httpServletRequest-ref="shibboleth.HttpServletRequest"
+        />
+
+    <bean id="UsernameAPI"
+        class="id.signet.idp.plugin.authn.rapididentity.impl.UsernameAPI" scope="prototype"
+        p:httpClient-ref="rapidIdentityHttpClient"
+        p:httpServletRequest-ref="shibboleth.HttpServletRequest"
+        />
+
+    <bean id="TOTPFormExtract"
+        class="id.signet.idp.plugin.authn.rapididentity.impl.TOTPFormExtract" scope="prototype"
+        p:httpServletRequest-ref="shibboleth.HttpServletRequest" />
+
+    <bean id="PolicyFormExtract"
+        class="id.signet.idp.plugin.authn.rapididentity.impl.PolicyFormExtract" scope="prototype"
+        p:policyCookieName="%{idp.authn.rapididentity.policyCookieName:shib_idp_rapididentity_policy}"
+        p:cookieManager-ref="shibboleth.UserPrefsCookieManager"
+        p:httpServletRequest-ref="shibboleth.HttpServletRequest" />
+
+    <bean id="PolicyAPI"
+        class="id.signet.idp.plugin.authn.rapididentity.impl.PolicyAPI" scope="prototype"
+        p:httpClient-ref="rapidIdentityHttpClient"
+        p:httpServletRequest-ref="shibboleth.HttpServletRequest"
+        />
+
+    <bean id="TOTPAPI"
+        class="id.signet.idp.plugin.authn.rapididentity.impl.TOTPAPI" scope="prototype"
+        p:httpClient-ref="rapidIdentityHttpClient"
+        p:httpServletRequest-ref="shibboleth.HttpServletRequest"
+        />
+
+    <bean id="PingMeInitAPI"
+        class="id.signet.idp.plugin.authn.rapididentity.impl.PingMeInitAPI" scope="prototype"
+        p:httpClient-ref="rapidIdentityHttpClient"
+        p:httpServletRequest-ref="shibboleth.HttpServletRequest"
+        />
+
+    <bean id="PingMeStatusAPI"
+        class="id.signet.idp.plugin.authn.rapididentity.impl.PingMeStatusAPI" scope="prototype"
+        p:httpClient-ref="rapidIdentityHttpClient"
+        p:httpServletRequest-ref="shibboleth.HttpServletRequest"
+        />
+
+    <bean id="ResetContext"
+        class="id.signet.idp.plugin.authn.rapididentity.impl.ResetContext" scope="prototype" />
+
+    <bean id="Validate"
+        class="id.signet.idp.plugin.authn.rapididentity.impl.Validate" scope="prototype"
+        p:addDefaultPrincipals="%{idp.authn.rapididentity.addDefaultPrincipals:true}"
+        />
+
+</beans>

@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>id.signet.idp.plugin.authn</groupId>
+        <artifactId>idp-plugin-rapididentity</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <name>Shibboleth IdP :: Plugins :: RapidIdentity MFA Flow</name>
+    <description>IdP RapidIdentity plugin implementation.</description>
+    <artifactId>idp-plugin-rapididentity-impl</artifactId>
+    <packaging>jar</packaging>
+
+    <properties>
+        <checkstyle.configLocation>${project.basedir}/../checkstyle.xml</checkstyle.configLocation>
+        <automatic.module.name>id.signet.idp.plugin.authn.rapididentity.impl</automatic.module.name>
+    </properties>
+
+    <dependencies>
+
+        <!-- provided dependencies -->
+        <dependency>
+            <groupId>${slf4j.groupId}</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.shibboleth.utilities</groupId>
+            <artifactId>java-support</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>${spring-webflow.groupId}</groupId>
+            <artifactId>spring-webflow</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>${idp.groupId}</groupId>
+            <artifactId>idp-admin-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>${idp.groupId}</groupId>
+            <artifactId>idp-attribute-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>${idp.groupId}</groupId>
+            <artifactId>idp-attribute-resolver-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>${idp.groupId}</groupId>
+            <artifactId>idp-authn-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>${idp.groupId}</groupId>
+            <artifactId>idp-session-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Needed to allow module/plugin derivation. -->
+        <dependency>
+            <groupId>${idp.groupId}</groupId>
+            <artifactId>idp-admin-impl</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>${opensaml.groupId}</groupId>
+            <artifactId>opensaml-messaging-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>${opensaml.groupId}</groupId>
+            <artifactId>opensaml-profile-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>${spring.groupId}</groupId>
+            <artifactId>spring-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.beust</groupId>
+            <artifactId>jcommander</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+		<dependency>
+		    <groupId>jakarta.json</groupId>
+		    <artifactId>jakarta.json-api</artifactId>
+		    <version>1.1.6</version>
+		</dependency>
+		<dependency>
+		    <groupId>org.glassfish</groupId>
+		    <artifactId>jakarta.json</artifactId>
+		    <version>1.1.6</version>
+		</dependency>
+
+        <!-- test dependencies -->
+        <dependency>
+            <groupId>${idp.groupId}</groupId>
+            <artifactId>idp-attribute-resolver-api</artifactId>
+            <scope>test</scope>
+            <type>test-jar</type>
+        </dependency>
+        <dependency>
+            <groupId>${idp.groupId}</groupId>
+            <artifactId>idp-attribute-resolver-impl</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>${idp.groupId}</groupId>
+            <artifactId>idp-authn-impl</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>${idp.groupId}</groupId>
+            <artifactId>idp-authn-impl</artifactId>
+            <scope>test</scope>
+            <type>test-jar</type>
+        </dependency>
+        <dependency>
+            <groupId>${idp.groupId}</groupId>
+            <artifactId>idp-profile-api</artifactId>
+            <scope>test</scope>
+            <type>test-jar</type>
+        </dependency>
+        <dependency>
+            <groupId>${opensaml.groupId}</groupId>
+            <artifactId>opensaml-core</artifactId>
+            <scope>test</scope>
+            <type>test-jar</type>
+        </dependency>
+        <dependency>
+            <groupId>net.shibboleth.utilities</groupId>
+            <artifactId>java-support</artifactId>
+            <scope>test</scope>
+            <type>test-jar</type>
+        </dependency>
+        <dependency>
+            <groupId>net.shibboleth.ext</groupId>
+            <artifactId>spring-extensions</artifactId>
+            <scope>test</scope>
+            <type>test-jar</type>
+        </dependency>
+        <dependency>
+            <groupId>${spring.groupId}</groupId>
+            <artifactId>spring-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.target.directory}</outputDirectory>
+                            <includeScope>runtime</includeScope>
+                            <excludeTransitive>true</excludeTransitive>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+		    <compilerArgs>
+		        <arg>-Xpkginfo:always</arg>
+		    </compilerArgs>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifestSections>
+                            <manifestSection>
+				<name>id/signet/idp/plugin/authn/rapididentity/</name>
+                                <manifestEntries>
+                                    <Implementation-Title>${project.artifactId}</Implementation-Title>
+                                    <Implementation-Version>${project.version}</Implementation-Version>
+                                    <Implementation-Vendor>id.signet</Implementation-Vendor>
+                                </manifestEntries>
+                            </manifestSection>
+                        </manifestSections>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

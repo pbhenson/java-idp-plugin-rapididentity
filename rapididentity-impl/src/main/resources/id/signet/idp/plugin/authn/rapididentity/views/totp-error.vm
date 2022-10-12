@@ -1,0 +1,28 @@
+## Velocity Template for TOTP error message production, included by totp.vm
+##
+## authenticationErrorContext - context containing error data, if available
+##
+#if ($authenticationErrorContext && $authenticationErrorContext.getClassifiedErrors().size() > 0)
+    ## This handles errors that are classified by the message maps in the authentication config.
+    #set ($eventId = $authenticationErrorContext.getClassifiedErrors().iterator().next())
+    #if ($eventId == "InvalidCredentials")
+        #set ($message = $springMacroRequestContext.getMessage("bad-tokencode.message", "The supplied token code was invalid."))
+    #elseif ($eventId == "NoCredentials")
+        #set ($message = $springMacroRequestContext.getMessage("no-tokencode.message", "No token code found."))
+    #elseif ($eventId != "ReselectFlow")
+        #set ($eventKey = $springMacroRequestContext.getMessage("$eventId", "login"))
+        #set ($message = $springMacroRequestContext.getMessage("${eventKey}.message", "Login Failure: $eventId"))
+    #end
+#elseif ($authenticationErrorContext && $authenticationErrorContext.getExceptions().size() > 0)
+    ## This handles login exceptions that are left unclassified.
+    #set ($loginException = $authenticationErrorContext.getExceptions().get(0))
+    #if ($loginException.getMessage())
+        #set ($message = "Login Failure: $loginException.getMessage()")
+    #else
+        #set ($message = $loginException.toString())
+    #end
+#end
+
+#if ($message)
+    <p class="output-message output--error">$encoder.encodeForHTML($message)</p>
+#end

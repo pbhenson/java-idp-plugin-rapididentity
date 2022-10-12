@@ -1,0 +1,190 @@
+<flow xmlns="http://www.springframework.org/schema/webflow" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/webflow http://www.springframework.org/schema/webflow/spring-webflow.xsd"
+    parent="authn.abstract, authn/conditions">
+
+    <!-- This is an authentication flow for RapidIdentity API MFA -->
+
+    <!-- First initialize the flow -->
+    <action-state id="InitFlow">
+        <evaluate expression="InitFlow" />
+        <evaluate expression="'proceed'" />
+
+        <transition on="UnknownUsername" to="ReselectFlow" />
+        <transition on="proceed" to="InitAPI" />
+    </action-state>
+
+    <!-- Initialize RapidIdentity API -->
+    <action-state id="InitAPI">
+        <evaluate expression="InitAPI" />
+
+        <transition on="UsernameAPI" to="UsernameAPI" />
+    </action-state>
+
+    <!-- Process username API call -->
+    <action-state id="UsernameAPI">
+        <evaluate expression="UsernameAPI" />
+
+        <transition on="TOTPForm" to="TOTPForm" />
+        <transition on="PingMeInitAPI" to="PingMeInitAPI" />
+        <transition on="PolicyForm" to="PolicyForm" />
+        <transition on="PolicyAPI" to="PolicyAPI" />
+    </action-state>
+
+    <!-- Display TOTP form and acquire OTP code -->
+    <view-state id="TOTPForm" view="rapididentity/totp">
+        <on-render>
+            <evaluate expression="environment" result="viewScope.environment" />
+            <evaluate expression="opensamlProfileRequestContext" result="viewScope.profileRequestContext" />
+            <evaluate expression="opensamlProfileRequestContext.getSubcontext(T(net.shibboleth.idp.authn.context.AuthenticationContext))" result="viewScope.authenticationContext" />
+            <evaluate expression="authenticationContext.getSubcontext(T(net.shibboleth.idp.ui.context.RelyingPartyUIContext))" result="viewScope.rpUIContext" />
+            <evaluate expression="authenticationContext.getSubcontext(T(net.shibboleth.idp.authn.context.AuthenticationErrorContext))" result="viewScope.authenticationErrorContext" />
+            <evaluate expression="authenticationContext.getSubcontext(T(net.shibboleth.idp.authn.context.AuthenticationWarningContext))" result="viewScope.authenticationWarningContext" />
+            <evaluate expression="authenticationContext.getSubcontext(T(id.signet.idp.plugin.authn.rapididentity.context.RapidIdentityContext))" result="viewScope.rapidIdentityContext" />
+            <evaluate expression="T(net.shibboleth.utilities.java.support.codec.HTMLEncoder)" result="viewScope.encoder" />
+            <evaluate expression="flowRequestContext.getExternalContext().getNativeRequest()" result="viewScope.request" />
+            <evaluate expression="flowRequestContext.getExternalContext().getNativeResponse()" result="viewScope.response" />
+            <evaluate
+                expression="flowRequestContext.getActiveFlow().getApplicationContext().containsBean('shibboleth.CustomViewContext') ? flowRequestContext.getActiveFlow().getApplicationContext().getBean('shibboleth.CustomViewContext') : null"
+                result="viewScope.custom" />
+        </on-render>
+
+        <transition on="proceed" to="TOTPFormExtract" />
+        <transition on="Cancel" to="ResetContext" />
+    </view-state>
+
+    <!-- Display available policies and allow selection of one -->
+    <view-state id="PolicyForm" view="rapididentity/policy">
+        <on-render>
+            <evaluate expression="environment" result="viewScope.environment" />
+            <evaluate expression="opensamlProfileRequestContext" result="viewScope.profileRequestContext" />
+            <evaluate expression="opensamlProfileRequestContext.getSubcontext(T(net.shibboleth.idp.authn.context.AuthenticationContext))" result="viewScope.authenticationContext" />
+            <evaluate expression="authenticationContext.getSubcontext(T(net.shibboleth.idp.ui.context.RelyingPartyUIContext))" result="viewScope.rpUIContext" />
+            <evaluate expression="authenticationContext.getSubcontext(T(net.shibboleth.idp.authn.context.AuthenticationErrorContext))" result="viewScope.authenticationErrorContext" />
+            <evaluate expression="authenticationContext.getSubcontext(T(net.shibboleth.idp.authn.context.AuthenticationWarningContext))" result="viewScope.authenticationWarningContext" />
+            <evaluate expression="authenticationContext.getSubcontext(T(id.signet.idp.plugin.authn.rapididentity.context.RapidIdentityContext))" result="viewScope.rapidIdentityContext" />
+            <evaluate expression="T(net.shibboleth.utilities.java.support.codec.HTMLEncoder)" result="viewScope.encoder" />
+            <evaluate expression="flowRequestContext.getExternalContext().getNativeRequest()" result="viewScope.request" />
+            <evaluate expression="flowRequestContext.getExternalContext().getNativeResponse()" result="viewScope.response" />
+            <evaluate
+                expression="flowRequestContext.getActiveFlow().getApplicationContext().containsBean('shibboleth.CustomViewContext') ? flowRequestContext.getActiveFlow().getApplicationContext().getBean('shibboleth.CustomViewContext') : null"
+                result="viewScope.custom" />
+        </on-render>
+        <transition on="proceed" to="PolicyFormExtract" />
+    </view-state>
+
+    <!-- Extract OTP code from form submission -->
+    <action-state id="TOTPFormExtract">
+        <evaluate expression="TOTPFormExtract" />
+        <evaluate expression="'proceed'" />
+
+        <transition on="proceed" to="TOTPAPI" />
+        <transition on="InvalidCredentials" to="TOTPForm" />
+        <transition on="Cancel" to="ResetContext" />
+    </action-state>
+
+    <!-- Extract selected policy from form submission -->
+    <action-state id="PolicyFormExtract">
+        <evaluate expression="PolicyFormExtract" />
+        <evaluate expression="'proceed'" />
+
+        <transition on="proceed" to="PolicyAPI" />
+    </action-state>
+
+    <!-- Process policy selection -->
+    <action-state id="PolicyAPI">
+        <evaluate expression="PolicyAPI" />
+
+        <transition on="TOTPForm" to="TOTPForm" />
+        <transition on="PingMeInitAPI" to="PingMeInitAPI" />
+    </action-state>
+
+    <!-- Process TOTP API call -->
+    <action-state id="TOTPAPI">
+        <evaluate expression="TOTPAPI" />
+
+        <transition on="PingMeInit" to="PingMeInitAPI" />
+        <transition on="Validate" to="Validate" />
+        <transition on="InvalidCredentials" to="TOTPForm" />
+    </action-state>
+
+    <!-- Process PingMe initialization -->
+    <action-state id="PingMeInitAPI">
+        <evaluate expression="PingMeInitAPI" />
+        <evaluate expression="'proceed'" />
+
+        <transition on="proceed" to="PingMeStatusView" />
+    </action-state>
+
+    <!-- Display status of PingMe auth -->
+    <view-state id="PingMeStatusView" view="rapididentity/pingMe-status">
+        <on-render>
+            <evaluate expression="environment" result="viewScope.environment" />
+            <evaluate expression="opensamlProfileRequestContext" result="viewScope.profileRequestContext" />
+            <evaluate expression="opensamlProfileRequestContext.getSubcontext(T(net.shibboleth.idp.authn.context.AuthenticationContext))" result="viewScope.authenticationContext" />
+            <evaluate expression="authenticationContext.getSubcontext(T(net.shibboleth.idp.ui.context.RelyingPartyUIContext))" result="viewScope.rpUIContext" />
+            <evaluate expression="authenticationContext.getSubcontext(T(net.shibboleth.idp.authn.context.AuthenticationErrorContext))" result="viewScope.authenticationErrorContext" />
+            <evaluate expression="authenticationContext.getSubcontext(T(net.shibboleth.idp.authn.context.AuthenticationWarningContext))" result="viewScope.authenticationWarningContext" />
+            <evaluate expression="authenticationContext.getSubcontext(T(id.signet.idp.plugin.authn.rapididentity.context.RapidIdentityContext))" result="viewScope.rapidIdentityContext" />
+            <evaluate expression="T(net.shibboleth.utilities.java.support.codec.HTMLEncoder)" result="viewScope.encoder" />
+            <evaluate expression="flowRequestContext.getExternalContext().getNativeRequest()" result="viewScope.request" />
+            <evaluate expression="flowRequestContext.getExternalContext().getNativeResponse()" result="viewScope.response" />
+            <evaluate
+                expression="flowRequestContext.getActiveFlow().getApplicationContext().containsBean('shibboleth.CustomViewContext') ? flowRequestContext.getActiveFlow().getApplicationContext().getBean('shibboleth.CustomViewContext') : null"
+                result="viewScope.custom" />
+        </on-render>
+
+        <transition on="proceed" to="PingMeStatusAPI" />
+        <transition on="Cancel" to="ResetContext" />
+    </view-state>
+
+    <!-- Update status of PingMe auth -->
+    <action-state id="PingMeStatusAPI">
+        <evaluate expression="PingMeStatusAPI" />
+        <evaluate expression="'proceed'" />
+
+        <transition on="proceed" to="PingMeStatusView" />
+        <transition on="TOTPForm" to="TOTPForm" />
+        <transition on="Validate" to="Validate" />
+        <transition on="InvalidCredentials" to="PingMeFailView" />
+    </action-state>
+
+    <!-- Display PingMe failure and retry/cancel options -->
+    <view-state id="PingMeFailView" view="rapididentity/pingMe-fail">
+        <on-render>
+            <evaluate expression="environment" result="viewScope.environment" />
+            <evaluate expression="opensamlProfileRequestContext" result="viewScope.profileRequestContext" />
+            <evaluate expression="opensamlProfileRequestContext.getSubcontext(T(net.shibboleth.idp.authn.context.AuthenticationContext))" result="viewScope.authenticationContext" />
+            <evaluate expression="authenticationContext.getSubcontext(T(net.shibboleth.idp.ui.context.RelyingPartyUIContext))" result="viewScope.rpUIContext" />
+            <evaluate expression="authenticationContext.getSubcontext(T(net.shibboleth.idp.authn.context.AuthenticationErrorContext))" result="viewScope.authenticationErrorContext" />
+            <evaluate expression="authenticationContext.getSubcontext(T(net.shibboleth.idp.authn.context.AuthenticationWarningContext))" result="viewScope.authenticationWarningContext" />
+            <evaluate expression="authenticationContext.getSubcontext(T(id.signet.idp.plugin.authn.rapididentity.context.RapidIdentityContext))" result="viewScope.rapidIdentityContext" />
+            <evaluate expression="T(net.shibboleth.utilities.java.support.codec.HTMLEncoder)" result="viewScope.encoder" />
+            <evaluate expression="flowRequestContext.getExternalContext().getNativeRequest()" result="viewScope.request" />
+            <evaluate expression="flowRequestContext.getExternalContext().getNativeResponse()" result="viewScope.response" />
+            <evaluate
+                expression="flowRequestContext.getActiveFlow().getApplicationContext().containsBean('shibboleth.CustomViewContext') ? flowRequestContext.getActiveFlow().getApplicationContext().getBean('shibboleth.CustomViewContext') : null"
+                result="viewScope.custom" />
+        </on-render>
+
+        <transition on="proceed" to="PingMeInitAPI" />
+        <transition on="Cancel" to="ResetContext" />
+    </view-state>
+
+    <!-- Process cancellation of current attempt and retry -->
+    <action-state id="ResetContext">
+        <evaluate expression="ResetContext" />
+        <evaluate expression="'proceed'" />
+
+        <transition on="proceed" to="InitAPI" />
+    </action-state>
+
+    <!-- Process successful MFA and return to idp -->
+    <action-state id="Validate">
+        <evaluate expression="Validate" />
+        <evaluate expression="'proceed'" />
+
+        <transition on="proceed" to="proceed" />
+    </action-state>
+
+    <bean-import resource="rapididentity-beans.xml" />
+</flow>
