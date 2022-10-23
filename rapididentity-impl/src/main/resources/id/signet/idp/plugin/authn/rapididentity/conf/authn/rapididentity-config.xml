@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd"
+       default-init-method="initialize"
+       default-destroy-method="destroy">
+
+    <!-- Uncomment to configure account lockout backed by in-memory storage. -->
+    <!--
+    <bean id="shibboleth.authn.RapidIdentity.AccountLockoutManager"
+        parent="shibboleth.StorageBackedAccountLockoutManager"
+        p:maxAttempts="5"
+        p:counterInterval="PT5M"
+        p:lockoutDuration="PT5M"
+        p:extendLockoutDuration="false">
+            <property name="lockoutKeyStrategy">
+                <bean class="id.signet.idp.plugin.authn.rapididentity.impl.LockoutKeyStrategy"
+                   p:httpServletRequest-ref="shibboleth.HttpServletRequest" />
+            </property>
+    </bean>
+    -->
+
+</beans>

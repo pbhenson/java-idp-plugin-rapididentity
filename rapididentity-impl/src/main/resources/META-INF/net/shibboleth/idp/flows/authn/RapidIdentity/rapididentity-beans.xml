@@ -45,6 +45,8 @@
             </property>
     </bean>
 
+    <import resource="conditional:%{idp.home}/conf/authn/rapididentity-config.xml" />
+
     <bean id="InitFlow"
         class="id.signet.idp.plugin.authn.rapididentity.impl.InitFlow" scope="prototype"
         p:server="%{idp.authn.rapididentity.server}"
@@ -89,12 +91,14 @@
         class="id.signet.idp.plugin.authn.rapididentity.impl.TOTPAPI" scope="prototype"
         p:httpClient-ref="rapidIdentityHttpClient"
         p:httpServletRequest-ref="shibboleth.HttpServletRequest"
+        p:lockoutManager="#{getObject('shibboleth.authn.RapidIdentity.AccountLockoutManager')}"
         />
 
     <bean id="PingMeInitAPI"
         class="id.signet.idp.plugin.authn.rapididentity.impl.PingMeInitAPI" scope="prototype"
         p:httpClient-ref="rapidIdentityHttpClient"
         p:httpServletRequest-ref="shibboleth.HttpServletRequest"
+        p:lockoutManager="#{getObject('shibboleth.authn.RapidIdentity.AccountLockoutManager')}"
         />
 
     <bean id="PingMeStatusAPI"
@@ -109,6 +113,7 @@
     <bean id="Validate"
         class="id.signet.idp.plugin.authn.rapididentity.impl.Validate" scope="prototype"
         p:addDefaultPrincipals="%{idp.authn.rapididentity.addDefaultPrincipals:true}"
+        p:lockoutManager="#{getObject('shibboleth.authn.RapidIdentity.AccountLockoutManager')}"
         />
 
 </beans>

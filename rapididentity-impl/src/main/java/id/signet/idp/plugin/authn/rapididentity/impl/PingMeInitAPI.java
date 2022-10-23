@@ -49,6 +49,10 @@ public class PingMeInitAPI extends AbstractAPI {
 
         @Nonnull final String type = "pingMe";
 
+        if (checkLockedOut(profileRequestContext, authenticationContext)) {
+            return;
+        }
+
         final String pingMeUsername = rapidIdentityContext.getPingMeUsername();
         if (pingMeUsername == null) {
             log.error("{} PingMe username not found", getLogPrefix());
@@ -74,6 +78,10 @@ public class PingMeInitAPI extends AbstractAPI {
             return;
         }
 
+        /* We count PingMe "attempts" (request sent to user) rather than explicit
+         * "failures" (request denied or timed out) for the purpose of lockout
+         */
+        incrementLockOut(profileRequestContext);
         rapidIdentityContext.setPingMeStart(Instant.now());
 
         apiEvaluate(profileRequestContext, authenticationContext, jsonData);

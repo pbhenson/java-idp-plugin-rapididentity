@@ -39,6 +39,7 @@ import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.servlet.http.HttpServletRequest;
 import net.shibboleth.idp.authn.AbstractAuthenticationAction;
+import net.shibboleth.idp.authn.AccountLockoutManager;
 import net.shibboleth.idp.authn.AuthnEventIds;
 import net.shibboleth.idp.authn.context.AuthenticationContext;
 import net.shibboleth.idp.authn.context.AuthenticationErrorContext;
@@ -91,6 +92,9 @@ public abstract class AbstractAPI extends AbstractAuthenticationAction {
     @Nonnull private List<String> supportedAuthMethods =
         new ArrayList<>(List.of("totp", "pingMe"));
 
+    /** Optional lockout management interface. */
+    @Nullable private AccountLockoutManager lockoutManager;
+
     /** Constructor. */
     public AbstractAPI() {
         contextLookupStrategy = new ChildContextLookup<>(RapidIdentityContext.class, true);
@@ -116,6 +120,16 @@ public abstract class AbstractAPI extends AbstractAuthenticationAction {
         ComponentSupport.ifInitializedThrowUnmodifiabledComponentException(this);
 
         httpClient = Constraint.isNotNull(theHttpClient, "httpClient cannot be null");
+    }
+    /**
+     * Set an account lockout management component.
+     *
+     * @param manager lockout manager
+     */
+    public void setLockoutManager(@Nullable final AccountLockoutManager manager) {
+        ComponentSupport.ifInitializedThrowUnmodifiabledComponentException(this);
+
+        lockoutManager = manager;
     }
 
     /**
@@ -359,6 +373,7 @@ public abstract class AbstractAPI extends AbstractAuthenticationAction {
             if (error != null) {
                 if (error.equals("Authentication Failed")) {
                     log.warn("{} TOTP by '{}' failed", getLogPrefix(), rapidIdentityContext.getUsername());
+                    incrementLockOut(profileRequestContext);
                     authenticationContext.getSubcontext(AuthenticationErrorContext.class,
                         true).getClassifiedErrors().add(AuthnEventIds.INVALID_CREDENTIALS);
                     ActionSupport.buildEvent(profileRequestContext, AuthnEventIds.INVALID_CREDENTIALS);
@@ -544,13 +559,13 @@ public abstract class AbstractAPI extends AbstractAuthenticationAction {
                 ActionSupport.buildEvent(profileRequestContext, AuthnEventIds.AUTHN_EXCEPTION);
                 return;
             }
-            
+
             if (policiesArray == null) {
                 log.error("{} policies array not found in api response", getLogPrefix());
                 ActionSupport.buildEvent(profileRequestContext, AuthnEventIds.AUTHN_EXCEPTION);
                 return;
             }
-            
+
             if (policiesArray.size() < 2) {
                 log.error("{} policies array size less than 2", getLogPrefix());
                 ActionSupport.buildEvent(profileRequestContext, AuthnEventIds.AUTHN_EXCEPTION);
@@ -671,4 +686,54 @@ public abstract class AbstractAPI extends AbstractAuthenticationAction {
             ActionSupport.buildEvent(profileRequestContext, AuthnEventIds.AUTHN_EXCEPTION);
         }
     }
+
+    /**
+     * Checks lockout status if enabled and generates event if locked out.
+     *
+     * @param profileRequestContext ProfileRequestContext for request
+     * @param authenticationContext authenticationContext for request
+     *
+     * @return true if account was locked out
+     *
+     */
+    protected boolean checkLockedOut(@Nonnull final ProfileRequestContext profileRequestContext,
+        @Nonnull final AuthenticationContext authenticationContext) {
+
+        if (lockoutManager != null) {
+            final String username = rapidIdentityContext.getUsername();
+
+            log.debug("{} checking lockout status for user '{}'", getLogPrefix(), username);
+
+            if (lockoutManager.check(profileRequestContext)) {
+                log.warn("{} user '{}' locked out, aborting authentication", getLogPrefix(), username);
+
+                authenticationContext.getSubcontext(AuthenticationErrorContext.class,
+                    true).getClassifiedErrors().add(AuthnEventIds.ACCOUNT_LOCKED);
+                ActionSupport.buildEvent(profileRequestContext, AuthnEventIds.ACCOUNT_LOCKED);
+
+                return true;
+            }
+        } else {
+            log.debug("{} lockoutManager not enabled", getLogPrefix());
+        }
+
+        return false;
+    }
+
+    /**
+     * Updates lockout count increment on failure.
+     *
+     * @param profileRequestContext ProfileRequestContext for request
+     *
+     */
+    protected void incrementLockOut(@Nonnull final ProfileRequestContext profileRequestContext) {
+        if (lockoutManager != null) {
+            log.debug("{} incrementing lockout failure count", getLogPrefix());
+
+            lockoutManager.increment(profileRequestContext);
+        } else {
+            log.debug("{} lockoutManager not enabled", getLogPrefix());
+        }
+    }
+
 }

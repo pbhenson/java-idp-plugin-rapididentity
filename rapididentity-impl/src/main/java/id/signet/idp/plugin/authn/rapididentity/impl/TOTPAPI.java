@@ -45,6 +45,11 @@ public class TOTPAPI extends AbstractAPI {
             @Nonnull final AuthenticationContext authenticationContext) {
 
         final String type = "totp";
+
+        if (checkLockedOut(profileRequestContext, authenticationContext)) {
+            return;
+        }
+
         final String otpCode = rapidIdentityContext.getTOTPCode();
         log.debug("{} TOTP code = {}", getLogPrefix(), otpCode);
         rapidIdentityContext.setTOTPCode(null);

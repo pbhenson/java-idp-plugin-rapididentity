@@ -21,12 +21,15 @@ package id.signet.idp.plugin.authn.rapididentity.impl;
 import id.signet.idp.plugin.authn.rapididentity.context.RapidIdentityContext;
 import java.util.function.Function;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.security.auth.Subject;
 import net.shibboleth.idp.authn.AbstractValidationAction;
+import net.shibboleth.idp.authn.AccountLockoutManager;
 import net.shibboleth.idp.authn.AuthnEventIds;
 import net.shibboleth.idp.authn.context.AuthenticationContext;
 import net.shibboleth.idp.authn.principal.UsernamePrincipal;
 import net.shibboleth.utilities.java.support.annotation.constraint.NonnullAfterInit;
+import net.shibboleth.utilities.java.support.component.ComponentSupport;
 import org.opensaml.messaging.context.navigate.ChildContextLookup;
 import org.opensaml.profile.action.ActionSupport;
 import org.opensaml.profile.context.ProfileRequestContext;
@@ -50,9 +53,23 @@ public class Validate extends AbstractValidationAction {
     /** RapidIdentity context in use. */
     @NonnullAfterInit private RapidIdentityContext rapidIdentityContext;
 
+    /** Optional lockout management interface. */
+    @Nullable private AccountLockoutManager lockoutManager;
+
     /** Constructor. */
     public Validate() {
         contextLookupStrategy = new ChildContextLookup<>(RapidIdentityContext.class, true);
+    }
+
+    /**
+     * Set an account lockout management component.
+     *
+     * @param manager lockout manager
+     */
+    public void setLockoutManager(@Nullable final AccountLockoutManager manager) {
+        ComponentSupport.ifInitializedThrowUnmodifiabledComponentException(this);
+
+        lockoutManager = manager;
     }
 
     /** {@inheritDoc} */
@@ -80,6 +97,17 @@ public class Validate extends AbstractValidationAction {
             @Nonnull final AuthenticationContext authenticationContext) {
 
         log.info("{} RapidIdentity MFA by '{}' succeeded", getLogPrefix(), rapidIdentityContext.getUsername());
+
+        if (lockoutManager != null) {
+            log.debug("{} clearing lockout state", getLogPrefix());
+
+            if (!lockoutManager.clear(profileRequestContext)) {
+                log.warn("{} failed to clear lockout state", getLogPrefix());
+            }
+        } else {
+            log.debug("{} lockoutManager not enabled", getLogPrefix());
+        }
+
         buildAuthenticationResult(profileRequestContext, authenticationContext);
         ActionSupport.buildProceedEvent(profileRequestContext);
     }

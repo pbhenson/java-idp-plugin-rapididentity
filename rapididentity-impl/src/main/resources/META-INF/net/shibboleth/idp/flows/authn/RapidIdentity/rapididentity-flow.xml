@@ -105,6 +105,7 @@
         <transition on="PingMeInit" to="PingMeInitAPI" />
         <transition on="Validate" to="Validate" />
         <transition on="InvalidCredentials" to="TOTPForm" />
+        <transition on="AccountLocked" to="TOTPForm" />
     </action-state>
 
     <!-- Process PingMe initialization -->
@@ -112,6 +113,7 @@
         <evaluate expression="PingMeInitAPI" />
         <evaluate expression="'proceed'" />
 
+        <transition on="AccountLocked" to="PingMeFailView" />
         <transition on="proceed" to="PingMeStatusView" />
     </action-state>
 
