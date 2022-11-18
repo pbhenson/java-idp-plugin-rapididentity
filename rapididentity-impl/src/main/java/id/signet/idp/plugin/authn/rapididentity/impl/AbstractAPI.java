@@ -533,7 +533,7 @@ public abstract class AbstractAPI extends AbstractAuthenticationAction {
                     log.debug("{} {} seconds left before PingMe timeout", getLogPrefix(), pingMeTimeLeft);
                     ActionSupport.buildProceedEvent(profileRequestContext);
                 } else {
-                    log.warn("{} PingMe timed out");
+                    log.warn("{} PingMe by '{}' timed out", getLogPrefix(), rapidIdentityContext.getUsername());
                     authenticationContext.getSubcontext(AuthenticationErrorContext.class,
                         true).getClassifiedErrors().add(AuthnEventIds.INVALID_CREDENTIALS);
                     ActionSupport.buildEvent(profileRequestContext, AuthnEventIds.INVALID_CREDENTIALS);
