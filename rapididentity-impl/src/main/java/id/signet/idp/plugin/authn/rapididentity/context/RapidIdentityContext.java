@@ -82,6 +82,9 @@ public class RapidIdentityContext extends BaseContext {
     /** List of available auth policies if multiple set. */
     @Nonnull private List<AuthPolicy> authPolicies = new ArrayList<>();
 
+    /** Error code for internal errors. */
+    @NonnullAfterInit private String errorCode;
+
     /** Constructor. */
     public RapidIdentityContext() {
         /* Add a persistent cookie store to http client context */
@@ -478,6 +481,32 @@ public class RapidIdentityContext extends BaseContext {
     @Nonnull public long pingMeTimeLeft() {
         return Math.max(0, pingMeTimeout.getSeconds() -
                             ChronoUnit.SECONDS.between(pingMeStart, Instant.now()));
+    }
+
+    /**
+     * Get the internal error code.
+     *
+     * @return internal error code
+     */
+    @Nonnull public String getErrorCode() {
+        if (errorCode == null) {
+            return "internal";
+        }
+
+        return errorCode;
+    }
+
+    /**
+     * Set the internal error code.
+     *
+     * @param code the internal error code
+     *
+     * @return this context
+     */
+    @Nonnull public RapidIdentityContext setErrorCode(@Nonnull final String code) {
+        errorCode = code;
+
+        return this;
     }
 
     /**

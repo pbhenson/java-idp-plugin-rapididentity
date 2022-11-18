@@ -17,6 +17,7 @@
     <action-state id="InitAPI">
         <evaluate expression="InitAPI" />
 
+        <transition on="AuthenticationException" to="DisplayErrorView" />
         <transition on="UsernameAPI" to="UsernameAPI" />
     </action-state>
 
@@ -24,6 +25,7 @@
     <action-state id="UsernameAPI">
         <evaluate expression="UsernameAPI" />
 
+        <transition on="AuthenticationException" to="DisplayErrorView" />
         <transition on="TOTPForm" to="TOTPForm" />
         <transition on="PingMeInitAPI" to="PingMeInitAPI" />
         <transition on="PolicyForm" to="PolicyForm" />
@@ -77,6 +79,7 @@
         <evaluate expression="TOTPFormExtract" />
         <evaluate expression="'proceed'" />
 
+        <transition on="AuthenticationException" to="DisplayErrorView" />
         <transition on="proceed" to="TOTPAPI" />
         <transition on="InvalidCredentials" to="TOTPForm" />
         <transition on="Cancel" to="ResetContext" />
@@ -94,6 +97,7 @@
     <action-state id="PolicyAPI">
         <evaluate expression="PolicyAPI" />
 
+        <transition on="AuthenticationException" to="DisplayErrorView" />
         <transition on="TOTPForm" to="TOTPForm" />
         <transition on="PingMeInitAPI" to="PingMeInitAPI" />
     </action-state>
@@ -102,6 +106,7 @@
     <action-state id="TOTPAPI">
         <evaluate expression="TOTPAPI" />
 
+        <transition on="AuthenticationException" to="DisplayErrorView" />
         <transition on="PingMeInit" to="PingMeInitAPI" />
         <transition on="Validate" to="Validate" />
         <transition on="InvalidCredentials" to="TOTPForm" />
@@ -113,6 +118,7 @@
         <evaluate expression="PingMeInitAPI" />
         <evaluate expression="'proceed'" />
 
+        <transition on="AuthenticationException" to="DisplayErrorView" />
         <transition on="AccountLocked" to="PingMeFailView" />
         <transition on="proceed" to="PingMeStatusView" />
     </action-state>
@@ -144,6 +150,7 @@
         <evaluate expression="PingMeStatusAPI" />
         <evaluate expression="'proceed'" />
 
+        <transition on="AuthenticationException" to="DisplayErrorView" />
         <transition on="proceed" to="PingMeStatusView" />
         <transition on="TOTPForm" to="TOTPForm" />
         <transition on="Validate" to="Validate" />
@@ -172,6 +179,28 @@
         <transition on="Cancel" to="ResetContext" />
     </view-state>
 
+    <!-- Display general error message -->
+    <view-state id="DisplayErrorView" view="rapididentity/general-error">
+        <on-render>
+            <evaluate expression="environment" result="viewScope.environment" />
+            <evaluate expression="opensamlProfileRequestContext" result="viewScope.profileRequestContext" />
+            <evaluate expression="opensamlProfileRequestContext.getSubcontext(T(net.shibboleth.idp.authn.context.AuthenticationContext))" result="viewScope.authenticationContext" />
+            <evaluate expression="authenticationContext.getSubcontext(T(net.shibboleth.idp.ui.context.RelyingPartyUIContext))" result="viewScope.rpUIContext" />
+            <evaluate expression="authenticationContext.getSubcontext(T(net.shibboleth.idp.authn.context.AuthenticationErrorContext))" result="viewScope.authenticationErrorContext" />
+            <evaluate expression="authenticationContext.getSubcontext(T(net.shibboleth.idp.authn.context.AuthenticationWarningContext))" result="viewScope.authenticationWarningContext" />
+            <evaluate expression="authenticationContext.getSubcontext(T(id.signet.idp.plugin.authn.rapididentity.context.RapidIdentityContext))" result="viewScope.rapidIdentityContext" />
+            <evaluate expression="T(net.shibboleth.utilities.java.support.codec.HTMLEncoder)" result="viewScope.encoder" />
+            <evaluate expression="flowRequestContext.getExternalContext().getNativeRequest()" result="viewScope.request" />
+            <evaluate expression="flowRequestContext.getExternalContext().getNativeResponse()" result="viewScope.response" />
+            <evaluate
+                expression="flowRequestContext.getActiveFlow().getApplicationContext().containsBean('shibboleth.CustomViewContext') ? flowRequestContext.getActiveFlow().getApplicationContext().getBean('shibboleth.CustomViewContext') : null"
+                result="viewScope.custom" />
+        </on-render>
+
+        <transition on="Cancel" to="ResetContext" />
+    </view-state>
+
+
     <!-- Process cancellation of current attempt and retry -->
     <action-state id="ResetContext">
         <evaluate expression="ResetContext" />
@@ -185,6 +214,7 @@
         <evaluate expression="Validate" />
         <evaluate expression="'proceed'" />
 
+        <transition on="AuthenticationException" to="DisplayErrorView" />
         <transition on="proceed" to="proceed" />
     </action-state>
 
