@@ -29,6 +29,14 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
         <link rel="stylesheet" type="text/css" href="$request.getContextPath()#springMessageText("idp.css", "/css/placeholder.css")">
+        <script type="text/javascript">
+            window.onload = setTimeout(
+                function() {
+                    var pagebutton = document.getElementById("status");
+                    pagebutton.click();
+                },
+                1000 * $pingMeRefresh);
+        </script>
     </head>
     <body>
         <main class="main">
@@ -67,13 +75,16 @@
 
                     <div class="grid">
                         <div class="grid-item">
-                            Refresh page in $pingMeRefresh seconds
+                            Waiting for PingMe approval
+                        </div>
+                        <div class="grid-item">
+                            $pingMeRefresh seconds until page refresh
                         </div>
                         <div class="grid-item">
                             $pingMeTimeLeft seconds until timeout
                         </div>
-                        <div class="grid-item">
-                            <button type="submit" name="_eventId_proceed"
+                        <div class="grid-item" style="display:none"> 
+                            <button id="status" type="submit" name="_eventId_proceed"
                                 onClick="this.childNodes[0].nodeValue='#springMessageText("idp.authn.rapididentity.pleasewait", "Please wait...")'"
                                 >#springMessageText("idp.authn.rapididentity.pingMestatus", "Status")</button>
                         </div>
